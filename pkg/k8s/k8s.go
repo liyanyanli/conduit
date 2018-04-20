@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"net/url"
 
+	appsv1beta2 "k8s.io/api/apps/v1beta2"
+	apiv1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -72,4 +76,24 @@ func CanonicalKubernetesNameFromFriendlyName(friendlyName string) (string, error
 	}
 
 	return "", fmt.Errorf("cannot find Kubernetes canonical name from friendly name [%s]", friendlyName)
+}
+
+// GetSelectorFromObject returns a label selector based on the Kubernetes object provided.
+func GetSelectorFromObject(obj runtime.Object) (labels.Selector, error) {
+	switch typed := obj.(type) {
+	case *apiv1.Namespace:
+		return labels.Everything(), nil
+
+	case *appsv1beta2.Deployment:
+		return labels.Set(typed.Spec.Selector.MatchLabels).AsSelector(), nil
+
+	case *apiv1.ReplicationController:
+		return labels.Set(typed.Spec.Selector).AsSelector(), nil
+
+	case *apiv1.Service:
+		return labels.Set(typed.Spec.Selector).AsSelector(), nil
+
+	default:
+		return nil, fmt.Errorf("Cannot get object selector: %v", obj)
+	}
 }

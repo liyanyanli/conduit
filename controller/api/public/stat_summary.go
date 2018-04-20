@@ -335,12 +335,12 @@ func (s *grpcServer) getDeployments(res *pb.Resource) (map[string]metav1.ObjectM
 	var deployments []*appsv1beta2.Deployment
 
 	if res.Namespace == "" {
-		deployments, err = s.deployLister.List(labels.Everything())
+		deployments, err = s.lister.Deploy.List(labels.Everything())
 	} else if res.Name == "" {
-		deployments, err = s.deployLister.Deployments(res.Namespace).List(labels.Everything())
+		deployments, err = s.lister.Deploy.Deployments(res.Namespace).List(labels.Everything())
 	} else {
 		var deployment *appsv1beta2.Deployment
-		deployment, err = s.deployLister.Deployments(res.Namespace).Get(res.Name)
+		deployment, err = s.lister.Deploy.Deployments(res.Namespace).Get(res.Name)
 		deployments = []*appsv1beta2.Deployment{deployment}
 	}
 
@@ -372,10 +372,10 @@ func (s *grpcServer) getNamespaces(res *pb.Resource) (map[string]metav1.ObjectMe
 	var namespaces []*apiv1.Namespace
 
 	if res.Name == "" {
-		namespaces, err = s.namespaceLister.List(labels.Everything())
+		namespaces, err = s.lister.NS.List(labels.Everything())
 	} else {
 		var namespace *apiv1.Namespace
-		namespace, err = s.namespaceLister.Get(res.Name)
+		namespace, err = s.lister.NS.Get(res.Name)
 		namespaces = []*apiv1.Namespace{namespace}
 	}
 
@@ -407,12 +407,12 @@ func (s *grpcServer) getPods(res *pb.Resource) (map[string]metav1.ObjectMeta, ma
 	var pods []*apiv1.Pod
 
 	if res.Namespace == "" {
-		pods, err = s.podLister.List(labels.Everything())
+		pods, err = s.lister.Pod.List(labels.Everything())
 	} else if res.Name == "" {
-		pods, err = s.podLister.Pods(res.Namespace).List(labels.Everything())
+		pods, err = s.lister.Pod.Pods(res.Namespace).List(labels.Everything())
 	} else {
 		var pod *apiv1.Pod
-		pod, err = s.podLister.Pods(res.Namespace).Get(res.Name)
+		pod, err = s.lister.Pod.Pods(res.Namespace).Get(res.Name)
 		pods = []*apiv1.Pod{pod}
 	}
 
@@ -448,12 +448,12 @@ func (s *grpcServer) getReplicationControllers(res *pb.Resource) (map[string]met
 	var rcs []*apiv1.ReplicationController
 
 	if res.Namespace == "" {
-		rcs, err = s.replicationControllerLister.List(labels.Everything())
+		rcs, err = s.lister.RC.List(labels.Everything())
 	} else if res.Name == "" {
-		rcs, err = s.replicationControllerLister.ReplicationControllers(res.Namespace).List(labels.Everything())
+		rcs, err = s.lister.RC.ReplicationControllers(res.Namespace).List(labels.Everything())
 	} else {
 		var rc *apiv1.ReplicationController
-		rc, err = s.replicationControllerLister.ReplicationControllers(res.Namespace).Get(res.Name)
+		rc, err = s.lister.RC.ReplicationControllers(res.Namespace).Get(res.Name)
 		rcs = []*apiv1.ReplicationController{rc}
 	}
 
@@ -485,12 +485,12 @@ func (s *grpcServer) getServices(res *pb.Resource) (map[string]metav1.ObjectMeta
 	var services []*apiv1.Service
 
 	if res.Namespace == "" {
-		services, err = s.serviceLister.List(labels.Everything())
+		services, err = s.lister.Svc.List(labels.Everything())
 	} else if res.Name == "" {
-		services, err = s.serviceLister.Services(res.Namespace).List(labels.Everything())
+		services, err = s.lister.Svc.Services(res.Namespace).List(labels.Everything())
 	} else {
 		var svc *apiv1.Service
-		svc, err = s.serviceLister.Services(res.Namespace).Get(res.Name)
+		svc, err = s.lister.Svc.Services(res.Namespace).Get(res.Name)
 		services = []*apiv1.Service{svc}
 	}
 
@@ -518,12 +518,12 @@ func (s *grpcServer) getServices(res *pb.Resource) (map[string]metav1.ObjectMeta
 }
 
 func (s *grpcServer) getMeshedPodCount(namespace string, obj runtime.Object) (*meshedCount, error) {
-	selector, err := getSelectorFromObject(obj)
+	selector, err := k8s.GetSelectorFromObject(obj)
 	if err != nil {
 		return nil, err
 	}
 
-	pods, err := s.podLister.Pods(namespace).List(selector)
+	pods, err := s.lister.Pod.Pods(namespace).List(selector)
 	if err != nil {
 		return nil, err
 	}
@@ -553,25 +553,6 @@ func isPendingOrRunning(pod *apiv1.Pod) bool {
 	running := pod.Status.Phase == apiv1.PodRunning
 	terminating := pod.DeletionTimestamp != nil
 	return (pending || running) && !terminating
-}
-
-func getSelectorFromObject(obj runtime.Object) (labels.Selector, error) {
-	switch typed := obj.(type) {
-	case *apiv1.Namespace:
-		return labels.Everything(), nil
-
-	case *appsv1beta2.Deployment:
-		return labels.Set(typed.Spec.Selector.MatchLabels).AsSelector(), nil
-
-	case *apiv1.ReplicationController:
-		return labels.Set(typed.Spec.Selector).AsSelector(), nil
-
-	case *apiv1.Service:
-		return labels.Set(typed.Spec.Selector).AsSelector(), nil
-
-	default:
-		return nil, fmt.Errorf("Cannot get object selector: %v", obj)
-	}
 }
 
 func (s *grpcServer) queryProm(ctx context.Context, query string) (model.Vector, error) {

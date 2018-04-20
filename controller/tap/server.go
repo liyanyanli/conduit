@@ -90,7 +90,96 @@ func (s *server) Tap(req *public.TapRequest, stream pb.Tap_TapServer) error {
 }
 
 func (s *server) TapByResource(req *public.TapByResourceRequest, stream pb.Tap_TapByResourceServer) error {
+
 	return fmt.Errorf("unimplemented")
+
+	// // TODO: Allow a configurable aperture A.
+	// //       If the target contains more than A pods, select A of them at random.
+	// var err error
+	// var objectMap map[string]metav1.ObjectMeta
+	// var meshCount map[string]*meshedCount
+
+	// k8s.GetSelectorFromObject()
+
+	// switch req.Selector.Resource.Type {
+	// case k8s.KubernetesDeployments:
+	// 	objectMap, meshCount, err = s.getDeployments(req.Selector.Resource)
+	// case k8s.KubernetesNamespaces:
+	// 	objectMap, meshCount, err = s.getNamespaces(req.Selector.Resource)
+	// case k8s.KubernetesPods:
+	// 	objectMap, meshCount, err = s.getPods(req.Selector.Resource)
+	// case k8s.KubernetesReplicationControllers:
+	// 	objectMap, meshCount, err = s.getReplicationControllers(req.Selector.Resource)
+	// case k8s.KubernetesServices:
+
+	// 	switch req.Outbound.(type) {
+	// 	case *pb.StatSummaryRequest_FromResource:
+	// 		objectMap, meshCount, err = s.getServices(req.Selector.Resource)
+	// 	default:
+	// 		err = fmt.Errorf("Service only supported as a target on 'from' queries, or as a destination on 'to' queries.")
+	// 	}
+
+	// 	default:
+	// 		err = fmt.Errorf("Unimplemented resource type: %v", req.Selector.Resource.Type)
+	// 	}
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	return s.objectQuery(ctx, req, objectMap, meshCount)
+	// }
+
+	// var pods []*v1.Pod
+	// var targetName string
+	// switch target := req.Target.Resource.Type {
+	// case k8s.KubernetesPods:
+	// 	targetName = target.Pod
+	// 	pod, err := s.pods.GetPod(target.Pod)
+	// 	if err != nil {
+	// 		return status.Errorf(codes.NotFound, err.Error())
+	// 	}
+	// 	pods = []*v1.Pod{pod}
+	// case *public.TapRequest_Deployment:
+	// 	targetName = target.Deployment
+	// 	var err error
+	// 	pods, err = s.pods.GetPodsByIndex(target.Deployment)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	// log.Printf("Tapping %d pods for target %s", len(pods), targetName)
+
+	// events := make(chan *common.TapEvent)
+
+	// go func() { // Stop sending back events if the request is cancelled
+	// 	<-stream.Context().Done()
+	// 	close(events)
+	// }()
+
+	// // divide the rps evenly between all pods to tap
+	// rpsPerPod := req.MaxRps / float32(len(pods))
+	// if rpsPerPod < 1 {
+	// 	rpsPerPod = 1
+	// }
+
+	// for _, pod := range pods {
+	// 	// initiate a tap on the pod
+	// 	match, err := makeMatch(req)
+	// 	if err != nil {
+	// 		return nil
+	// 	}
+	// 	go s.tapProxy(stream.Context(), rpsPerPod, match, pod.Status.PodIP, events)
+	// }
+
+	// // read events from the taps and send them back
+	// for event := range events {
+	// 	err := stream.Send(event)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+	// return nil
 }
 
 func validatePort(port uint32) error {
